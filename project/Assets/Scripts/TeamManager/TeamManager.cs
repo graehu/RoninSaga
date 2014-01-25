@@ -23,6 +23,7 @@ public class TeamManager : MonoBehaviour
         int member = memIndices[currentMem];
         int point = spawnIndices[currentSpawn];
         TeamMember inst = GameObject.Instantiate(members[member]) as TeamMember;
+        inst.manager = this;
         inst.teamColor = teamColor;
         inst.transform.parent = this.transform;
         inst.transform.localPosition = spawnPoints[point].transform.localPosition;
@@ -52,6 +53,7 @@ public class TeamManager : MonoBehaviour
             TeamMember m = initialMembers[mem];
             Transform t = initialPoints[point];
             TeamMember inst = GameObject.Instantiate(m) as TeamMember;
+            inst.manager = this;
             inst.transform.parent = this.transform;
             inst.teamColor = teamColor;
             inst.transform.localPosition = t.localPosition;

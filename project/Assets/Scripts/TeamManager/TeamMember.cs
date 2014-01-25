@@ -16,8 +16,11 @@ public class TeamMember : CombatEntity
         black,
     }
 
+    [HideInInspector]
+    public TeamManager manager = null;
     public Team teamColor = Team.white;
     public static List<TeamMember> TeamMembers = new List<TeamMember>();
+    public float moral = 10.0f;
 	
 	public override bool GetClosestEnemy(out Killable _target, out float _distance)
 	{

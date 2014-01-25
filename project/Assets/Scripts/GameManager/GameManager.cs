@@ -9,10 +9,19 @@ public class GameManager : MonoBehaviour
     public float spawnInterval = 5;
     #endregion
     float spawnTick = 0;
+
+    public float GetTeamMoral(TeamMember.Team _team)
+    {
+        float totalMoral = 0;
+        for(int i = 0; i < TeamMember.TeamMembers.Count; i++)
+        {
+            totalMoral = TeamMember.TeamMembers[i].moral;
+        }
+        return totalMoral;
+    }
 	// Update is called once per frame
 	void Update ()
     {
-        spawnTick += Time.deltaTime;
         if (spawnTick > spawnInterval)
         {
             Debug.Log("Spawn!");
@@ -20,7 +29,6 @@ public class GameManager : MonoBehaviour
             {
                 teamManagers[i].Spawn();
             }
-
             spawnTick = spawnInterval - spawnInterval;
         }
 	}
