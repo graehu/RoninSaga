@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public class TeamManager : MonoBehaviour
 {
     #region public
-    TeamMember.Team color = TeamMember.Team.white;
+    TeamMember.Team teamColor = TeamMember.Team.white;
 
     //
     public List<TeamMember> members;
@@ -34,14 +34,14 @@ public class TeamManager : MonoBehaviour
             TeamMember m = initialMembers[mem];
             Transform t = initialPoints[point];
             TeamMember inst = GameObject.Instantiate(m) as TeamMember;
+            inst.teamColor = teamColor;
+            TeamMember.TeamMembers.Add(inst);
             inst.transform.localPosition = t.localPosition;
         }
     }
-
     // Update is called once per frame
     void Update()
     {
 
     }
-
 }

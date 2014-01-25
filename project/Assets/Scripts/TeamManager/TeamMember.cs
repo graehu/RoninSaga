@@ -15,8 +15,8 @@ public class TeamMember : Killable
         yellow,
         black,
     }
-    public Team color = Team.white;
-    static List<TeamMember> TeamMembers = new List<TeamMember>();
+    public Team teamColor = Team.white;
+    public static List<TeamMember> TeamMembers = new List<TeamMember>();
     #endregion
 
 
