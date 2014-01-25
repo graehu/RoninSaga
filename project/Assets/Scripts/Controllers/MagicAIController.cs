@@ -20,8 +20,9 @@ public class MagicAIController : MonoBehaviour
 	public Vector3 targetPosition;
 	public float targetThreshold = 0.15f;
 
-	public float stateDelay = 0.5f;
+	public float fleeCooldown = 1.0f;
 	public float fleeRadius = 0.5f;
+	public float distanceToFlee = 1.0f;
 
 	public int consecutiveAttacks = 2;
 	public float attackDelay = 0.5f;
@@ -41,6 +42,9 @@ public class MagicAIController : MonoBehaviour
 
 	Killable targetToAttack = null;
 
+	float lastFleeTime = 0;
+
+
 	#endregion
 
 	#region private methods
@@ -49,6 +53,12 @@ public class MagicAIController : MonoBehaviour
 	{
 		currentState = _newState;
 		stateTick = 0;
+	}
+
+	void OnDamage(DamagePacket _damagePacket)
+	{
+		//rethink on damage
+		SetState (State.Idle);
 	}
 
 	#endregion
@@ -67,29 +77,34 @@ public class MagicAIController : MonoBehaviour
 	{
 		stateTick += Time.deltaTime;
 
-		if(stateTick < stateDelay)
-			return;
-
 		switch(currentState)
 		{
 		case State.Idle:
 		{
-			//if a player is within flee radius, move to a random position
-			foreach(PlayerController player in PlayerController.currentPlayers)
+			if(Time.time > lastFleeTime + fleeCooldown)
 			{
-				if(Vector2.Distance(this.transform.position, player.transform.position) < fleeRadius)
+				Killable enemy = null;
+				float enemyDistance = 0;
+				if(entity.GetClosestEnemy(out enemy, out enemyDistance))
 				{
-					targetPosition = RoomHelper.RandomPosition();
-					SetState(State.Moving);
-					return;
+					if(enemyDistance < fleeRadius)
+					{
+						targetPosition = this.transform.position + (this.transform.position - enemy.transform.position).normalized * fleeRadius;
+						targetPosition = RoomHelper.BoundToRoom(targetPosition);
+						SetState(State.Moving);
+
+						lastFleeTime = Time.time;
+						return;
+					}
 				}
 			}
 
-			if(Random.value < agressiveness)
+			float decision = Random.value*2.0f;
+			if(decision < agressiveness)
 			{
 				SetState(State.Attacking);
 			}
-			else
+			else if (decision >= 1 && decision < curiousness + 1)
 			{
 				targetPosition = RoomHelper.RandomPosition();
 				SetState(State.Moving);
@@ -105,16 +120,8 @@ public class MagicAIController : MonoBehaviour
 			//try to find target
 			if(targetToAttack == null)
 			{
-				float minDist = float.MaxValue;
-				foreach(PlayerController player in PlayerController.currentPlayers)
-				{
-					float dist = Vector2.Distance(this.transform.position, player.transform.position);
-					if(dist < minDist)
-					{
-						minDist = dist;
-						targetToAttack = player.entity;
-					}
-				}
+				float enemyDistance;
+				entity.GetClosestEnemy(out targetToAttack, out enemyDistance);
 				attackCount = 0;
 			}
 			else
@@ -125,16 +132,16 @@ public class MagicAIController : MonoBehaviour
 					targetToAttack = null;
 					targetPosition = RoomHelper.RandomPosition();
 					SetState(State.Moving);
+					break;
 				}
 				//try to attack
-				else if(stateTick > stateDelay + attackDelay + (attackCount*attackInterval))
+				else if(stateTick > attackDelay + (attackCount*attackInterval))
 				{
 					attackCount++;
 					entity.TryCastMagic();
 				}
 
 				entity.TryLook(targetToAttack.transform.position - this.transform.position);
-
 			}
 
 			entity.TryMove(Vector2.zero);
@@ -153,18 +160,14 @@ public class MagicAIController : MonoBehaviour
 				entity.TryMove(distance);
 				entity.TryLook(distance);
 			}
+
+			//timeout if blocked
+			if(stateTick > 5.0f)
+			{
+				SetState(State.Idle);
+			}
 			break;
 		}
-		}
-	}
-
-	void OnCollisionStay2D(Collision2D _collision)
-	{
-		if(_collision.collider.tag == "Player")
-		{
-			targetPosition = this.transform.position + (this.transform.position - _collision.collider.transform.position).normalized * fleeRadius;
-			targetPosition = RoomHelper.BoundToRoom(targetPosition);
-			SetState(State.Moving);
 		}
 	}
 

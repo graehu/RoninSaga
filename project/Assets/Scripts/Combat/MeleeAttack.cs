@@ -5,6 +5,8 @@ public class MeleeAttack : MonoBehaviour
 {
 	#region public variables
 
+	public Killable owner = null; //TODO: change to team alignment
+
 	public int baseDamage = 1;
 	public float damageScale = 1;
 	public float knockbackSpeed = 10;
@@ -41,6 +43,7 @@ public class MeleeAttack : MonoBehaviour
 			Debug.LogError("Missing Collider2D on AreaDamage");
 			enabled = false;
 		}
+		this.collider2D.enabled = false;
 	}
 
 	void Update()
@@ -55,10 +58,15 @@ public class MeleeAttack : MonoBehaviour
 	void OnTriggerEnter2D(Collider2D _other)
 	{
 		Killable killable = _other.GetComponent<Killable>();
-		if(killable && !processed.Contains(killable))
+		if(owner.CanDamage(killable) && !processed.Contains(killable))
 		{
 			int realDamage = (int)(baseDamage * damageScale);
-			killable.OnDamage(realDamage, (killable.transform.position - transform.position).normalized * knockbackSpeed);
+			Vector2 knockback = (killable.transform.position - transform.position).normalized * knockbackSpeed;
+
+			DamagePacket damagePacket = new DamagePacket(owner, realDamage, knockback);
+
+			killable.BroadcastMessage("OnDamage", damagePacket, SendMessageOptions.DontRequireReceiver);
+
 			processed.Add(killable);
 		}
 	}

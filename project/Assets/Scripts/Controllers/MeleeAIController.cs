@@ -16,12 +16,13 @@ public class MeleeAIController : MonoBehaviour {
 
 	#region public variables
 
-	public Entity entity;
+	public CombatEntity entity;
 
 	public State currentState = State.Idle;
 
 	public int damage = 1;
 	public float attackRate = 0.5f;
+	public float attackDistance = 0.5f;
 	public float knockbackVelocity = 5;
 	public float agressiveness = 0.4f;
 
@@ -58,10 +59,16 @@ public class MeleeAIController : MonoBehaviour {
 		}
 	}
 
+	void OnDamage(DamagePacket _damagePacket)
+	{
+		if (entity.health <= fleeHealth)
+			SetState (State.Fleeing);
+	}
+
 	// Use this for initialization
 	void Start () 
 	{
-		entity = GetComponentInChildren<Entity>();
+		entity = GetComponentInChildren<CombatEntity>();
 	}
 	
 	// Update is called once per frame
@@ -79,22 +86,13 @@ public class MeleeAIController : MonoBehaviour {
 			entity.TryMove(Vector2.zero);
 
 			//pick closest target
-			float minDist = float.MaxValue;
-			for(int i = 0; i < PlayerController.currentPlayers.Count; i++)
-			{
-				PlayerController player = PlayerController.currentPlayers[i];
-				if((player.entity.transform.position - this.entity.transform.position).magnitude < minDist)
-				{
-					target = player.entity;
-				}
-			}
+			float enemyDistance;
+			entity.GetClosestEnemy(out target, out enemyDistance);
 
 			//choose something to do
 			if(Random.value < 0.1f)
 			{
-				if(entity.health < fleeHealth || Random.value > agressiveness)
-					SetState(State.Fleeing);
-				else if(target)
+				if(target && Random.value <= agressiveness)
 					SetState(State.Attacking);
 			}
 
@@ -113,6 +111,10 @@ public class MeleeAIController : MonoBehaviour {
 				Vector3 delta = target.transform.position - this.entity.transform.position;
 				entity.TryMove(delta);
 				entity.TryLook(delta);
+				if(Vector3.Distance(entity.transform.position, target.transform.position) < attackDistance)
+				{
+					entity.TryMeleeAttack();
+				}
 			}
 
 			if(stateTick > 1.0f)
@@ -130,27 +132,13 @@ public class MeleeAIController : MonoBehaviour {
 				entity.TryMove(delta);
 				entity.TryLook(delta);
 			}
-
-			if(stateTick > 1.0f)
+			else
 			{
 				SetState(State.Idle);
 			}
 
 			break;
 		}
-		}
-	}
-	
-	void OnCollisionStay2D(Collision2D _collision)
-	{
-		if(CanAttack)
-		{
-			Killable killable = _collision.collider.GetComponent<Killable>();
-			if(killable && killable == target)
-			{
-				killable.OnDamage(damage, (target.transform.position - this.entity.transform.position).normalized * knockbackVelocity);
-				OnAttack();
-			}
 		}
 	}
 }

@@ -1,10 +1,12 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(CircleCollider2D))]
 public class Projectile : MonoBehaviour 
 {
+	public Killable owner = null; //TODO: change to team alignment
+
 	public int baseDamage = 1;
 	public float damageScale = 1;
 	public float speed = 5;
@@ -18,10 +20,15 @@ public class Projectile : MonoBehaviour
 	void OnTriggerEnter2D(Collider2D _other)
 	{
 		Killable killable = _other.GetComponent<Killable>();
-		if(killable)
+		if(owner.CanDamage(killable))
 		{
 			int realDamage = (int)(baseDamage * damageScale);
-			killable.OnDamage(realDamage, (killable.transform.position - this.transform.position).normalized * knockbackVelocity);
+			Vector2 knockback = (killable.transform.position - this.transform.position).normalized * knockbackVelocity;
+			
+			DamagePacket damagePacket = new DamagePacket(owner, realDamage, knockback);
+			
+			killable.BroadcastMessage("OnDamage", damagePacket, SendMessageOptions.DontRequireReceiver);
+
 			if(destroyOnHit)
 			{
 				Destroy(gameObject);

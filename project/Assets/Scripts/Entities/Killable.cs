@@ -3,6 +3,8 @@ using System.Collections;
 
 public class Killable : MonoBehaviour 
 {
+	#region public variables
+
     public int health = 10;
 
     public AudioClip deathSound = null;
@@ -12,6 +14,63 @@ public class Killable : MonoBehaviour
 	public GameObject[] spawnOnHit = new GameObject[0];
 
 	public GameObject damageTextPrefab = null;
+
+	#endregion
+
+	#region protected variables
+
+	protected CombatEntity lastAggressor = null;
+
+	#endregion
+
+	#region public methods
+	
+	public virtual void OnDamage(DamagePacket _damagePacket)
+	{
+		health -= _damagePacket.damageAmount;
+		if (health <= 0)
+		{
+			OnDeath();
+		}
+		FAFAudio.Instance.PlayOnce(damageSound, 0.8f);
+		
+		for (int i = 0; i < spawnOnHit.Length; i++)
+		{
+			GameObject gobj = Instantiate(spawnOnHit[i]) as GameObject;
+			gobj.transform.position = this.transform.position;
+		}
+		
+		GameObject text = Instantiate(damageTextPrefab) as GameObject;
+		text.transform.position = this.transform.position;
+		text.GetComponentInChildren<TextMesh>().text = _damagePacket.damageAmount.ToString();
+		
+		Debug.Log(name + " took " + _damagePacket.damageAmount + " damage");
+	}
+	
+	public virtual void OnDeath()
+	{
+		health = 0;
+		
+		//do some fancy shit here
+		FAFAudio.Instance.PlayOnce(deathSound, 1);
+		
+		for (int i = 0; i < spawnOnDeath.Length; i++)
+		{
+			GameObject gobj = Instantiate(spawnOnDeath[i]) as GameObject;
+			gobj.transform.position = this.transform.position;
+		}
+		
+		Destroy(this.gameObject);
+	}
+
+	public virtual bool CanDamage(Killable _killable)
+	{
+		return _killable && _killable != this;
+	}
+	
+	#endregion
+
+	#region monobehaviuor methods
 
 	// Use this for initialization
 	void Start () {
@@ -23,41 +82,6 @@ public class Killable : MonoBehaviour
 	
 	}
 
-    public virtual void OnDamage(int _damage, Vector3 _knockbackVelocity)
-    {
-        health -= _damage;
-        if (health <= 0)
-        {
-            OnDeath();
-        }
-        FAFAudio.Instance.PlayOnce(damageSound, 0.8f);
-
-		for (int i = 0; i < spawnOnHit.Length; i++)
-		{
-			GameObject gobj = Instantiate(spawnOnHit[i]) as GameObject;
-			gobj.transform.position = this.transform.position;
-		}
-
-		GameObject text = Instantiate(damageTextPrefab) as GameObject;
-		text.transform.position = this.transform.position;
-		text.GetComponentInChildren<TextMesh>().text = _damage.ToString();
-
-		Debug.Log(name + " took " + (int)_damage + " damage");
-    }
-    
-    public virtual void OnDeath()
-    {
-        health = 0;
-        
-        //do some fancy shit here
-        FAFAudio.Instance.PlayOnce(deathSound, 1);
-
-        for (int i = 0; i < spawnOnDeath.Length; i++)
-        {
-            GameObject gobj = Instantiate(spawnOnDeath[i]) as GameObject;
-            gobj.transform.position = this.transform.position;
-        }
-        
-        Destroy(this.gameObject);
-    }
+	#endregion
+	
 }
