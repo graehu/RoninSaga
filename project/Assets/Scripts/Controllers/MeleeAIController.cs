@@ -83,8 +83,6 @@ public class MeleeAIController : MonoBehaviour {
 		{
 		case State.Idle:
 		{
-			entity.TryMove(Vector2.zero);
-
 			//pick closest target
 			float enemyDistance;
 			entity.GetClosestEnemy(out target, out enemyDistance);
@@ -102,10 +100,18 @@ public class MeleeAIController : MonoBehaviour {
 				entity.TryLook(new Vector2(Random.Range(-1,1),Random.Range(-1,1)));
 				idleLookTick = 0.5f + Random.value*1.5f;
 			}
+
+			entity.TryMove(Vector2.zero);
+
 			break;
 		}
 		case State.Attacking:
 		{
+			if(target == null || stateTick > 1.0f)
+			{
+				SetState(State.Idle);
+			}
+
 			if(CanAttack)
 			{
 				Vector3 delta = target.transform.position - this.entity.transform.position;
@@ -115,11 +121,6 @@ public class MeleeAIController : MonoBehaviour {
 				{
 					entity.TryMeleeAttack();
 				}
-			}
-
-			if(stateTick > 1.0f)
-			{
-				SetState(State.Idle);
 			}
 
 			break;

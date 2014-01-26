@@ -15,6 +15,8 @@ public class Entity : Killable {
     public Vector2 Heading { get { return heading; } }
     public Vector2 LookDirection { get { return lookDirection; } }
 
+	public Animator animator;
+
     bool isMoving;
     Vector2 heading = Vector2.zero;
     Vector2 lookDirection = Vector2.zero;
@@ -23,6 +25,7 @@ public class Entity : Killable {
 
     public void TryMove(Vector2 _heading)
     {
+		bool wasMoving = isMoving;
         if (_heading != Vector2.zero)
         {
             heading = _heading.normalized;
@@ -30,6 +33,9 @@ public class Entity : Killable {
         }
         else
             isMoving = false;
+
+		if(isMoving != wasMoving)
+			animator.SetBool("isMoving", isMoving);
     }
 
     public void TryTurn(Vector2 _heading)

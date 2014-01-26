@@ -17,8 +17,6 @@ public class CombatEntity : Entity
 	
 	public Projectile magicPrefab;
 
-	public Animator animator;
-
 	#endregion
 
 	#region protected variables
