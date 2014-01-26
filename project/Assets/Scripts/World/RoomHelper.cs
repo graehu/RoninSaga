@@ -3,7 +3,7 @@ using System.Collections;
 
 public class RoomHelper : MonoBehaviour
 {
-	static Rect roomArea = new Rect(-3,-3,6,6);
+	static Rect roomArea = new Rect(-6,-3,12,6);
 
 	#region public static methods
 
