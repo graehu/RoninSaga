@@ -18,6 +18,11 @@ public class GameManager : MonoBehaviour
 	public float startDelay = 1;
 	public float RelativeMoral { get { return relativeMoral; } }
 
+	public TextMesh ticketTextRed = null;
+	public TextMesh ticketTextBlue = null;
+
+	public bool dirtyScore = false;
+
     #endregion
 
 	#region private variables
@@ -40,6 +45,8 @@ public class GameManager : MonoBehaviour
 		{
 			teamManager.Spawn();
 		}
+
+		dirtyScore = true;
 	}
 
     public float GetTeamMoral(TeamMember.Team _team)
@@ -65,6 +72,39 @@ public class GameManager : MonoBehaviour
 
 	#endregion
 
+	#region priovate methods
+
+	void UpdateUI()
+	{
+		if(dirtyScore)
+		{
+			dirtyScore = false;
+
+			//calculate relative moral
+			float blueMoral = GetTeamMoral(TeamMember.Team.blue);
+			float redMoral = GetTeamMoral(TeamMember.Team.red);
+			
+			float totalMoral = blueMoral + redMoral;
+			relativeMoral = (redMoral - blueMoral) / totalMoral;
+			
+			//update ticket counts
+			foreach(TeamManager teamManager in TeamManager.AllTeamManagers)
+			{
+				if(teamManager.teamColor == TeamMember.Team.blue)
+					ticketTextBlue.text = teamManager.MembersToSpawn.Count.ToString();
+				if(teamManager.teamColor == TeamMember.Team.red)
+					ticketTextRed.text = teamManager.MembersToSpawn.Count.ToString();
+			}
+		}
+
+		//animate slider
+		Vector3 sliderPos = moralSlider.transform.position;
+		sliderPos.x = relativeMoral * moralSliderMaxOffset;
+		moralSlider.transform.position = Vector3.SmoothDamp(moralSlider.transform.position, sliderPos, ref moralVelocity, 0.5f);
+	}
+
+	#endregion
+
 	#region monobehaviour methods
 
 	void Awake()
@@ -86,8 +126,11 @@ public class GameManager : MonoBehaviour
 		tick += Time.deltaTime;
 		if(tick > startDelay)
 		{
+			UpdateUI();
+
 			if(!spawnedInitial)
 			{
+				dirtyScore = true;
 				spawnedInitial = true;
 				//have all teams spawn a new unit
 				foreach (TeamManager teamManager in TeamManager.AllTeamManagers) 
@@ -95,22 +138,14 @@ public class GameManager : MonoBehaviour
 					teamManager.SpawnInitial();
 				}
 			}
-	        if(Input.GetKeyDown(KeyCode.Escape))
+
+			if(Input.GetKeyDown(KeyCode.Escape))
 			{
 				Application.LoadLevel(Application.loadedLevel);
 			}
-
-			//calculate and update moral slider
-			float blueMoral = GetTeamMoral(TeamMember.Team.blue);
-			float redMoral = GetTeamMoral(TeamMember.Team.red);
-
-			float totalMoral = blueMoral + redMoral;
-			relativeMoral = (redMoral - blueMoral) / totalMoral;
-
-			Vector3 sliderPos = moralSlider.transform.position;
-			sliderPos.x = relativeMoral * moralSliderMaxOffset;
-			moralSlider.transform.position = Vector3.SmoothDamp(moralSlider.transform.position, sliderPos, ref moralVelocity, 0.5f);
 		}
+		
+		
 
 
 	}

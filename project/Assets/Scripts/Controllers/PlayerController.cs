@@ -125,6 +125,8 @@ public class PlayerController : MonoBehaviour
 			GameObject spawned = Instantiate(gobj) as GameObject;
 			spawned.transform.position = activeEntity.transform.position;
 		}
+
+		GameManager.Instance.dirtyScore = true;
 	}
 
     #endregion
