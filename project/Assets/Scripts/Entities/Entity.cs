@@ -69,26 +69,25 @@ public class Entity : Killable {
             return;
         }
 
+
+        Vector3 dir = heading;
+        //update movement facing
+        if (moveBody && heading != Vector2.zero)
+        {
+            Quaternion currentFacing = moveBody.transform.localRotation;
+            float desiredAngle = Mathf.Atan2(heading.y, heading.x) * Mathf.Rad2Deg;
+            Quaternion desiredFacing = Quaternion.Euler(new Vector3(0, 0, desiredAngle - 90));
+                
+            moveBody.transform.localRotation = Quaternion.RotateTowards(currentFacing, desiredFacing, movementRotSpeed * Time.deltaTime);
+
+            if(useSteering)
+            {
+                dir = moveBody.transform.up;
+            }
+        }
+
         if (isMoving)
         {
-
-            Vector3 dir = heading;
-
-            //update movement facing
-            if (moveBody && heading != Vector2.zero)
-            {
-                Quaternion currentFacing = moveBody.transform.localRotation;
-                float desiredAngle = Mathf.Atan2(heading.y, heading.x) * Mathf.Rad2Deg;
-                Quaternion desiredFacing = Quaternion.Euler(new Vector3(0, 0, desiredAngle - 90));
-                
-                moveBody.transform.localRotation = Quaternion.RotateTowards(currentFacing, desiredFacing, movementRotSpeed * Time.deltaTime);
-
-                if(useSteering)
-                {
-                    dir = moveBody.transform.up;
-                }
-            }
-
             rigidbody2D.velocity = dir * movementSpeed;
         } 
         else

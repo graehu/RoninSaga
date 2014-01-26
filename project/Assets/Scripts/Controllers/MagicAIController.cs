@@ -140,7 +140,7 @@ public class MagicAIController : MonoBehaviour
 					attackCount++;
 					entity.TryCastMagic();
 				}
-
+                entity.TryTurn(targetToAttack.transform.position - this.transform.position);
 				entity.TryLook(targetToAttack.transform.position - this.transform.position);
 			}
 
