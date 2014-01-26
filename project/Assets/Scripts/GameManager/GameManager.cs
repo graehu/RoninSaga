@@ -11,6 +11,21 @@ public class GameManager : MonoBehaviour
 
 	#endregion
 
+	#region public types
+
+	public enum State
+	{
+		NONE,
+		SPLASH,
+		FIGHT,
+		FIGHT_END,
+		FINAL_STAGE,
+		WIN,
+		LOOSE,
+	}
+
+	#endregion
+
     #region public variables
 
 	public SpriteRenderer moralSlider = null;
@@ -23,15 +38,25 @@ public class GameManager : MonoBehaviour
 
 	public bool dirtyScore = false;
 
+	public GameObject splashPopup = null;
+	public GameObject winPopup = null;
+	public GameObject loosePopup = null;
+	public GameObject finalStagePopup = null;
+
     #endregion
 
 	#region private variables
+
+	State state = State.NONE;
 
 	bool spawnedInitial = false;
     float tick = 0;
 
 	float relativeMoral = 0;
 	Vector3 moralVelocity = Vector3.zero;
+
+	GameObject currentPopup;
+	GameObject lastPopup;
 
 	#endregion
 
@@ -44,7 +69,35 @@ public class GameManager : MonoBehaviour
 		foreach (TeamManager teamManager in TeamManager.AllTeamManagers) 
 		{
             if(_teamMember.teamColor == teamManager.teamColor)
-			    teamManager.Spawn();
+			{
+				if(teamManager.MembersToSpawn.Count > 0)
+			    	teamManager.Spawn();
+				else
+				{
+					//FIXME: this is such a fucking hack
+					int remainingMembers = 0;
+					foreach(TeamMember member in TeamMember.AllTeamMembers)
+					{
+						if(member.teamColor == teamManager.teamColor)
+						{
+							bool isPlayer = false;
+							foreach(PlayerController player in PlayerController.currentPlayers)
+							{
+								if(player.activeEntity == member)
+								{
+									isPlayer = true;
+									break;
+								}
+							}
+							if(!isPlayer)
+								remainingMembers++;
+						}
+					}
+
+					if(remainingMembers == 0)
+						SetState(State.FIGHT_END);
+				}
+			}
 		}
 
 		dirtyScore = true;
@@ -80,7 +133,7 @@ public class GameManager : MonoBehaviour
 
 	#endregion
 
-	#region priovate methods
+	#region private methods
 
 	void UpdateUI()
 	{
@@ -91,26 +144,18 @@ public class GameManager : MonoBehaviour
 			//calculate relative moral
 			float blueMoral = GetTeamMoral(TeamMember.Team.blue);
 			float redMoral = GetTeamMoral(TeamMember.Team.red);
-
-            float redsToSpawn = 0;
-            float bluesToSpawn = 0;
-            for (int i = 0; i < TeamManager.AllTeamManagers.Count; i++)
-            {
-                if (TeamManager.AllTeamManagers[i].teamColor == TeamMember.Team.red)
-                    redsToSpawn = TeamManager.AllTeamManagers[i].MembersToSpawn.Count;
-                if (TeamManager.AllTeamManagers[i].teamColor == TeamMember.Team.blue)
-                    bluesToSpawn = TeamManager.AllTeamManagers[i].MembersToSpawn.Count;
-            }
-
-            blueMoral += (bluesToSpawn * 5);
-            redMoral += (redsToSpawn * 5);
 			
 			float totalMoral = blueMoral + redMoral;
-			relativeMoral = (redMoral - blueMoral) / totalMoral;
+
+			if(totalMoral != 0)
+				relativeMoral = (redMoral - blueMoral) / totalMoral;
+			else
+				relativeMoral = 0;
 			
-			//update ticket counts
+
 			foreach(TeamManager teamManager in TeamManager.AllTeamManagers)
 			{
+				//update ticket counts
 				if(teamManager.teamColor == TeamMember.Team.blue)
 					ticketTextBlue.text = teamManager.MembersToSpawn.Count.ToString();
 				if(teamManager.teamColor == TeamMember.Team.red)
@@ -122,6 +167,63 @@ public class GameManager : MonoBehaviour
 		Vector3 sliderPos = moralSlider.transform.position;
 		sliderPos.x = relativeMoral * moralSliderMaxOffset;
 		moralSlider.transform.position = Vector3.SmoothDamp(moralSlider.transform.position, sliderPos, ref moralVelocity, 0.5f);
+	}
+
+	void SetState(State _newState)
+	{
+		if(state == _newState)
+			return;
+
+		tick = 0;
+
+		lastPopup = currentPopup;
+
+		switch(_newState)
+		{
+		case State.SPLASH:
+		{
+			currentPopup = splashPopup;
+			break;
+		}
+		case State.FIGHT:
+		{
+			currentPopup = null;
+			break;
+		}
+		case State.FIGHT_END:
+		{
+			foreach(PlayerController player in PlayerController.currentPlayers)
+			{
+				player.activeEntity.teamColor = TeamMember.Team.none;
+			}
+			currentPopup = finalStagePopup;
+			break;
+		}
+		case State.FINAL_STAGE:
+		{
+			currentPopup = null;
+			break;
+		}
+		case State.WIN:
+		{
+			currentPopup = winPopup;
+			break;
+		}
+		case State.LOOSE:
+		{
+			currentPopup = loosePopup;
+			break;
+		}
+		}
+
+		if(currentPopup)
+			currentPopup.SetActive(true);
+		if(lastPopup)
+			lastPopup.SetActive(false);
+
+		state = _newState;
+
+		Debug.Log("Game state: " + state.ToString());
 	}
 
 	#endregion
@@ -138,37 +240,103 @@ public class GameManager : MonoBehaviour
 
 	void Start()
 	{
-
+		SetState(State.SPLASH);
 	}
 
 	// Update is called once per frame
 	void Update ()
     {
+		bool reset = false;
 		tick += Time.deltaTime;
-		if(tick > startDelay)
+
+		switch(state)
+		{
+		case State.SPLASH:
+		{
+			if(Input.anyKeyDown && tick > 0.5f)
+			{
+				SetState(State.FIGHT);
+			}
+			break;
+		}
+		case State.FIGHT:
+		{
+			if(tick > startDelay)
+			{
+				//if player is dead
+				if(PlayerController.currentPlayers.Count == 0)
+				{
+					SetState(State.LOOSE);
+				}
+
+				if(!spawnedInitial)
+				{
+					dirtyScore = true;
+					spawnedInitial = true;
+					//have all teams spawn a new unit
+					foreach (TeamManager teamManager in TeamManager.AllTeamManagers) 
+					{
+						teamManager.SpawnInitial();
+					}
+				}
+
+				UpdateUI();
+			}
+			break;
+		}
+		case State.FIGHT_END:
+		{
+			if(tick > 2.0f)
+			{
+				SetState(State.FINAL_STAGE);
+			}
+
+			UpdateUI();
+			
+			//if player is dead
+			if(PlayerController.currentPlayers.Count == 0)
+			{
+				SetState(State.LOOSE);
+			}
+			//if player is only member standing
+			else if(TeamMember.AllTeamMembers.Count == 1)
+			{
+				SetState(State.WIN);
+			}
+			break;
+		}
+		case State.FINAL_STAGE:
 		{
 			UpdateUI();
 
-			if(!spawnedInitial)
+			//if player is dead
+			if(PlayerController.currentPlayers.Count == 0)
 			{
-				dirtyScore = true;
-				spawnedInitial = true;
-				//have all teams spawn a new unit
-				foreach (TeamManager teamManager in TeamManager.AllTeamManagers) 
-				{
-					teamManager.SpawnInitial();
-				}
+				SetState(State.LOOSE);
 			}
-
-			if(Input.GetKeyDown(KeyCode.Escape))
+			//if player is only member standing
+			else if(TeamMember.AllTeamMembers.Count == 1 && TeamMember.AllTeamMembers[0].teamColor == TeamMember.Team.none)
 			{
-				Application.LoadLevel(Application.loadedLevel);
+				SetState(State.WIN);
 			}
+			break;
 		}
-		
-		
+		case State.WIN:
+		{
+			reset = Input.anyKeyDown && tick > 0.5f;
+			break;
+		}
+		case State.LOOSE:
+		{
+			reset = Input.anyKeyDown && tick > 0.5f;
+			break;
+		}
+		}
 
-
+		if(reset || Input.GetKeyDown(KeyCode.Escape))
+		{
+			Application.LoadLevel(Application.loadedLevel);
+		}
 	}
 
 	#endregion
