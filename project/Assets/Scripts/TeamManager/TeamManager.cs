@@ -5,60 +5,89 @@ using System.Collections.Generic;
 
 public class TeamManager : MonoBehaviour
 {
-    #region public
+	#region static variables
+
+	public static List<TeamManager> AllTeamManagers = new List<TeamManager>();
+
+	#endregion
+	
+    #region public variables
+
     public TeamMember.Team teamColor = TeamMember.Team.white;
 
     //
-    public List<TeamMember> members;
-    public List<Transform> spawnPoints;
+    public List<TeamMember> members = new List<TeamMember>();
+    public List<Transform> spawnPoints = new List<Transform>();
     //
-    public List<TeamMember> initialMembers;
-    public List<Transform> initialPoints;
+    public List<TeamMember> initialMembers = new List<TeamMember>();
+    public List<Transform> initialPoints = new List<Transform>();
 
+	public Stack<TeamMember> MembersToSpawn { get { return membersToSpawn; } }
+
+	#endregion
+
+	#region private variables
+	
+	private Stack<TeamMember> membersToSpawn = new Stack<TeamMember>();
+
+	#endregion
+
+	#region public methods
+
+	//spawns the initial set of members randomly accross the initial spawn points
+	public void SpawnInitial()
+	{
+		Stack<TeamMember> memberSet = new Stack<TeamMember>(initialMembers);
+
+		while(memberSet.Count > 0)
+		{
+			TeamMember memberToSpawn = memberSet.Pop();
+			Transform spawnPoint = initialPoints[Random.Range(0, initialPoints.Count)];
+			SpawnMember(memberToSpawn, spawnPoint);
+		}   
+	}
+
+	//spawns one member at a random spawn point
     public void Spawn()
     {
-        if (currentSpawn >= spawnPoints.Count || currentMem >= members.Count)
-            return;
-
-        int member = memIndices[currentMem];
-        int point = spawnIndices[currentSpawn];
-        TeamMember inst = GameObject.Instantiate(members[member]) as TeamMember;
-        inst.manager = this;
-        inst.teamColor = teamColor;
-        inst.transform.parent = this.transform;
-        inst.transform.localPosition = spawnPoints[point].transform.localPosition;
-        currentMem++;
-        currentSpawn++;
+		if(membersToSpawn.Count > 0)
+		{
+			TeamMember memberToSpawn = membersToSpawn.Pop();
+			Transform spawnPoint = initialPoints[Random.Range(0, initialPoints.Count)];
+			SpawnMember(memberToSpawn, spawnPoint);
+		}
     }
 
     #endregion
-    //Shuffled indexs used for member spawning;
-    private int[] memIndices;
-    private int[] spawnIndices;
-    private int currentMem = 0;
-    private int currentSpawn = 0;
+
+	#region protected methods
+
+	void SpawnMember(TeamMember _memberPrefab, Transform spawnPoint)
+	{
+		TeamMember inst = GameObject.Instantiate(_memberPrefab) as TeamMember;
+		inst.manager = this;
+		inst.teamColor = teamColor;
+		inst.transform.parent = this.transform;
+		inst.transform.position = spawnPoint.transform.position;
+	}
+
+	#endregion
 
     void Awake()
     {
-        //Spawn Points
-        int[] memShuffle = SortHelper.IndexShuffle(0, initialMembers.Count);
-        int[] pointShuffle = SortHelper.IndexShuffle(0, initialPoints.Count);
-        memIndices = SortHelper.IndexShuffle(0, members.Count);
-        spawnIndices = SortHelper.IndexShuffle(0, spawnPoints.Count);
+		//shuffle members
+		SortHelper.ListShuffle(initialMembers);
+		SortHelper.ListShuffle(members);
+		membersToSpawn = new Stack<TeamMember>(members);
 
-        for (int i = 0; i < memShuffle.Length; i++)
-        {
-            int mem = memShuffle[i];
-            int point = pointShuffle[mem];
-            TeamMember m = initialMembers[mem];
-            Transform t = initialPoints[point];
-            TeamMember inst = GameObject.Instantiate(m) as TeamMember;
-            inst.manager = this;
-            inst.transform.parent = this.transform;
-            inst.teamColor = teamColor;
-            inst.transform.localPosition = t.localPosition;
-        }
+		AllTeamManagers.Add(this);
     }
+
+	void OnDestroy()
+	{
+		AllTeamManagers.Remove(this);
+	}
+
     // Update is called once per frame
     void Update()
     {

@@ -14,15 +14,15 @@ public class PlayerController : MonoBehaviour
 
     #region public variables
 
-	public int playerIndex = -1;
+	public TeamMember entity;
+
 	public bool inputLocked = false;
 
 	public float meleeCooldown = 0.5f;
 	public float magicCooldown = 0.3f;
+	public float teamChangeCooldown = 0.0f;
 
 	public float magicChargeTime = 1.0f;
-
-	public CombatEntity entity;
 
     #endregion
 
@@ -30,6 +30,7 @@ public class PlayerController : MonoBehaviour
 
 	float meleeCooldownRemaining = 0;
 	float magicCooldownRemaining = 0;
+	float teamChangeCooldownRemaining = 0;
 
     #endregion
 
@@ -83,7 +84,26 @@ public class PlayerController : MonoBehaviour
 			magicCooldownRemaining += magicCooldown;
 			entity.TryCastMagic();
 		}
+		else if(Input.GetKeyDown(KeyCode.Space) && teamChangeCooldownRemaining <= 0 && entity.teamColor != TeamMember.Team.none)
+		{
+			teamChangeCooldownRemaining += teamChangeCooldown;
+			//TODO: better support for multiple teams
+			if(entity.teamColor == TeamMember.Team.white)
+			{
+				entity.teamColor = TeamMember.Team.black;
+			}
+			else if(entity.teamColor == TeamMember.Team.white)
+			{
+				entity.teamColor = TeamMember.Team.white;
+			}
+			OnTeamChange();
+		}
     }
+
+	void OnTeamChange()
+	{
+
+	}
 
     #endregion
 
@@ -109,7 +129,7 @@ public class PlayerController : MonoBehaviour
         }
 		meleeCooldownRemaining = Mathf.Max(0, meleeCooldownRemaining - Time.deltaTime);
 		magicCooldownRemaining = Mathf.Max(0, magicCooldownRemaining - Time.deltaTime);
-
+		teamChangeCooldownRemaining = Mathf.Max(0, teamChangeCooldownRemaining - Time.deltaTime);
 
 		//FIXME: DEBUG RESET
 		if(Input.GetKeyDown(KeyCode.R))

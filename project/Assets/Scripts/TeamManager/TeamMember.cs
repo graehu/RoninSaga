@@ -9,17 +9,14 @@ public class TeamMember : CombatEntity
     public enum Team
     {
         white,
-        green,
-        blue,
-        red,
-        yellow,
         black,
+		none
     }
 
     [HideInInspector]
     public TeamManager manager = null;
     public Team teamColor = Team.white;
-    public static List<TeamMember> TeamMembers = new List<TeamMember>();
+    public static List<TeamMember> AllTeamMembers = new List<TeamMember>();
     public float moral = 10.0f;
 	
 	public override bool GetClosestEnemy(out Killable _target, out float _distance)
@@ -28,7 +25,7 @@ public class TeamMember : CombatEntity
 		_distance = 0;
 
 		float minDist = float.MaxValue;
-		foreach (TeamMember teamMember in TeamMembers) 
+		foreach (TeamMember teamMember in AllTeamMembers) 
 		{
 			if(teamMember.teamColor != this.teamColor)
 			{
@@ -51,7 +48,13 @@ public class TeamMember : CombatEntity
 
 		//if base check is valid and is not on the same team return true
 		TeamMember teamMember = _killable as TeamMember;
-		return r && teamMember && teamMember.teamColor != this.teamColor;
+		return r && teamMember && (teamMember.teamColor != this.teamColor || teamMember.teamColor == Team.none || this.teamColor == Team.none);
+	}
+
+	public override void OnDeath ()
+	{
+		GameManager.Instance.OnTeamMemberDeath (this);
+		base.OnDeath ();
 	}
 	
     #endregion
@@ -59,12 +62,12 @@ public class TeamMember : CombatEntity
     void OnEnable()
     {
 		base.OnEnable ();
-        TeamMembers.Add(this);
+        AllTeamMembers.Add(this);
     }
 
     void OnDisable()
     {
 		base.OnDisable ();
-        TeamMembers.Remove(this);
+        AllTeamMembers.Remove(this);
     }
 }

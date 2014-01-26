@@ -8,7 +8,8 @@ public class SortHelper
     {
         if (min >= max)
         {
-            Debug.Log("ERROR: Min should not be greater than or equal to max: Min: " + min + ", Max:" + max);
+            Debug.LogError("Min should not be greater than or equal to max: Min: " + min + ", Max:" + max);
+			return null;
         }
         int size = max - min;
         int[] shuffle = new int[size];
@@ -24,4 +25,15 @@ public class SortHelper
         }
         return shuffle;
     }
+
+	static public void ListShuffle(IList _list)
+	{		
+		for (int i = _list.Count - 1; i >= 0; i--)
+		{
+			int j = Random.Range(0, i);
+			object swap = _list[i];
+			_list[i] = _list[j];
+			_list[j] = swap;
+		}
+	}
 }
