@@ -14,7 +14,10 @@ public class PlayerController : MonoBehaviour
 
     #region public variables
 
-	public TeamMember entity;
+	public TeamMember activeEntity = null;
+	public TeamMember whiteEntity = null;
+	public TeamMember blackEntity = null;
+	public List<GameObject> spawnOnTeamChange = new List<GameObject>();
 
 	public bool inputLocked = false;
 
@@ -61,14 +64,14 @@ public class PlayerController : MonoBehaviour
             dir.x = 1;
         }
         
-        entity.TryMove(dir);
+        activeEntity.TryMove(dir);
     }
 
     void TryLook()
     {
 
-	        Vector3 botScreenPos = Camera.main.WorldToScreenPoint(entity.transform.position);
-	        entity.TryLook(Input.mousePosition - botScreenPos);
+	        Vector3 botScreenPos = Camera.main.WorldToScreenPoint(activeEntity.transform.position);
+	        activeEntity.TryLook(Input.mousePosition - botScreenPos);
 	
     }
 
@@ -77,32 +80,51 @@ public class PlayerController : MonoBehaviour
 		if (Input.GetMouseButtonDown(0) && meleeCooldownRemaining <= 0)
         {
 			meleeCooldownRemaining += meleeCooldown;
-			entity.TryMeleeAttack();
+			activeEntity.TryMeleeAttack();
         }
 		else if (Input.GetMouseButtonDown(1) && magicCooldownRemaining <= 0)
 		{
 			magicCooldownRemaining += magicCooldown;
-			entity.TryCastMagic();
+			activeEntity.TryCastMagic();
 		}
-		else if(Input.GetKeyDown(KeyCode.Space) && teamChangeCooldownRemaining <= 0 && entity.teamColor != TeamMember.Team.none)
+		else if(Input.GetKeyDown(KeyCode.Space) && teamChangeCooldownRemaining <= 0 && activeEntity.teamColor != TeamMember.Team.none)
 		{
 			teamChangeCooldownRemaining += teamChangeCooldown;
 			//TODO: better support for multiple teams
-			if(entity.teamColor == TeamMember.Team.white)
+			if(activeEntity.teamColor == TeamMember.Team.white)
 			{
-				entity.teamColor = TeamMember.Team.black;
+				OnTeamChange(TeamMember.Team.black);
 			}
-			else if(entity.teamColor == TeamMember.Team.white)
+			else if(activeEntity.teamColor == TeamMember.Team.black)
 			{
-				entity.teamColor = TeamMember.Team.white;
+				OnTeamChange(TeamMember.Team.white);
 			}
-			OnTeamChange();
 		}
     }
 
-	void OnTeamChange()
+	void OnTeamChange(TeamMember.Team _team)
 	{
+		TeamMember previousEntity = activeEntity;
 
+		if(_team == TeamMember.Team.white)
+		{
+			blackEntity.gameObject.SetActive(false);
+			activeEntity = whiteEntity;
+		}
+		else if(_team == TeamMember.Team.black)
+		{
+			whiteEntity.gameObject.SetActive(false);
+			activeEntity = blackEntity;
+		}
+
+		activeEntity.gameObject.SetActive(true);
+		activeEntity.transform.position = previousEntity.transform.position;
+
+		foreach(GameObject gobj in spawnOnTeamChange)
+		{
+			GameObject spawned = Instantiate(gobj) as GameObject;
+			spawned.transform.position = activeEntity.transform.position;
+		}
 	}
 
     #endregion
@@ -113,12 +135,14 @@ public class PlayerController : MonoBehaviour
 	void Awake () 
     {
 		currentPlayers.Add(this);
+
+		OnTeamChange(activeEntity.teamColor);
 	}
 	
 	// Update is called once per frame
 	void Update () 
     {
-        if (entity)
+        if (activeEntity)
         {
 			if(!inputLocked)
 			{
@@ -140,7 +164,7 @@ public class PlayerController : MonoBehaviour
 
     void OnDisable()
     {
-        entity.TryMove(Vector2.zero);
+        activeEntity.TryMove(Vector2.zero);
     }
 
 	void OnDestroy()
