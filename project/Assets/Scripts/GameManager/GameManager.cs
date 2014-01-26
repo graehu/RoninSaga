@@ -43,7 +43,8 @@ public class GameManager : MonoBehaviour
 		//have all teams spawn a new unit
 		foreach (TeamManager teamManager in TeamManager.AllTeamManagers) 
 		{
-			teamManager.Spawn();
+            if(_teamMember.teamColor == teamManager.teamColor)
+			    teamManager.Spawn();
 		}
 
 		dirtyScore = true;
@@ -52,18 +53,25 @@ public class GameManager : MonoBehaviour
     public float GetTeamMoral(TeamMember.Team _team)
     {
         float totalMoral = 0;
+        float memsToSpawn = 0;
         for(int i = 0; i < TeamMember.AllTeamMembers.Count; i++)
         {
-			if(TeamMember.AllTeamMembers[i].teamColor == _team)
-            	totalMoral += TeamMember.AllTeamMembers[i].moral;
+            if (TeamMember.AllTeamMembers[i].teamColor == _team)
+                totalMoral += TeamMember.AllTeamMembers[i].moral;
         }
-        return totalMoral;
+        for(int i = 0; i < TeamManager.AllTeamManagers.Count; i++)
+        {
+            if (TeamManager.AllTeamManagers[i].teamColor == _team)
+                memsToSpawn = TeamManager.AllTeamManagers[i].MembersToSpawn.Count;
+        }
+
+        return totalMoral + (5*memsToSpawn);
     }
 
 	public float GetTeamRelativeMoral(TeamMember.Team _team)
-	{
+    {
 		if(_team == TeamMember.Team.red && relativeMoral > 0)
-			return relativeMoral;
+            return relativeMoral;
 		else if(_team == TeamMember.Team.blue && relativeMoral < 0)
 			return -relativeMoral;
 		else
@@ -83,6 +91,19 @@ public class GameManager : MonoBehaviour
 			//calculate relative moral
 			float blueMoral = GetTeamMoral(TeamMember.Team.blue);
 			float redMoral = GetTeamMoral(TeamMember.Team.red);
+
+            float redsToSpawn = 0;
+            float bluesToSpawn = 0;
+            for (int i = 0; i < TeamManager.AllTeamManagers.Count; i++)
+            {
+                if (TeamManager.AllTeamManagers[i].teamColor == TeamMember.Team.red)
+                    redsToSpawn = TeamManager.AllTeamManagers[i].MembersToSpawn.Count;
+                if (TeamManager.AllTeamManagers[i].teamColor == TeamMember.Team.blue)
+                    bluesToSpawn = TeamManager.AllTeamManagers[i].MembersToSpawn.Count;
+            }
+
+            blueMoral += (bluesToSpawn * 5);
+            redMoral += (redsToSpawn * 5);
 			
 			float totalMoral = blueMoral + redMoral;
 			relativeMoral = (redMoral - blueMoral) / totalMoral;

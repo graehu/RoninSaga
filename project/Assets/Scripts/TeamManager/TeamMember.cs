@@ -69,9 +69,9 @@ public class TeamMember : CombatEntity
 		float moralScale = GameManager.Instance.GetTeamRelativeMoral(teamColor);
 		actualMoralScale = Mathf.SmoothDamp(actualMoralScale, moralScale, ref moralScaleVelocity, 0.5f);
 
-		float physicalScale = 1 + actualMoralScale;
+		/*float physicalScale = 1 + actualMoralScale;
 		physicalScale = Mathf.Min(1.6f, physicalScale * physicalScale);
-		transform.localScale = new Vector3(physicalScale,physicalScale,physicalScale);
+		transform.localScale = new Vector3(physicalScale,physicalScale,physicalScale);*/
 
 		damageScale = 1.1f + actualMoralScale * 3f;
 	}

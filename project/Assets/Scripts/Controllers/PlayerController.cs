@@ -47,19 +47,19 @@ public class PlayerController : MonoBehaviour
     {
         //Handle input 
         Vector2 dir = Vector2.zero;
-        if(Input.GetKey(KeyCode.W))
+        if(Input.GetKey(KeyCode.UpArrow))
         {
             dir.y = 1;
         }
-        else if (Input.GetKey (KeyCode.S)) 
+        else if (Input.GetKey (KeyCode.DownArrow)) 
         {
             dir.y = -1;
         }
-        if (Input.GetKey (KeyCode.A))
+        if (Input.GetKey (KeyCode.LeftArrow))
         {
             dir.x = -1;
         }
-        else if (Input.GetKey (KeyCode.D))
+        else if (Input.GetKey (KeyCode.RightArrow))
         {
             dir.x = 1;
         }
@@ -77,17 +77,17 @@ public class PlayerController : MonoBehaviour
 
     void TryAction()
     {
-		if (Input.GetMouseButtonDown(0) && meleeCooldownRemaining <= 0)
+		if (Input.GetKeyDown(KeyCode.X) && meleeCooldownRemaining <= 0)
         {
 			meleeCooldownRemaining += meleeCooldown;
 			activeEntity.TryMeleeAttack();
         }
-		else if (Input.GetMouseButtonDown(1) && magicCooldownRemaining <= 0)
+		/*else if (Input.GetMouseButtonDown(1) && magicCooldownRemaining <= 0)
 		{
 			magicCooldownRemaining += magicCooldown;
 			activeEntity.TryCastMagic();
-		}
-		else if(Input.GetKeyDown(KeyCode.Space) && teamChangeCooldownRemaining <= 0 && activeEntity.teamColor != TeamMember.Team.none)
+		}*/
+		else if(Input.GetKeyDown(KeyCode.Z) && teamChangeCooldownRemaining <= 0 && activeEntity.teamColor != TeamMember.Team.none)
 		{
 			teamChangeCooldownRemaining += teamChangeCooldown;
 			//TODO: better support for multiple teams
