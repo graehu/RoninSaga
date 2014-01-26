@@ -41,6 +41,7 @@ public class CombatEntity : Entity
 		meleeAreaDamage.ApplyDamage();
 
 		animator.SetTrigger("melee");
+        Debug.Log("slash!");
 	}
 	
 	public void TryDashSlash()
