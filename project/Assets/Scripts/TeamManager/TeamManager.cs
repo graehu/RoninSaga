@@ -13,7 +13,7 @@ public class TeamManager : MonoBehaviour
 	
     #region public variables
 
-    public TeamMember.Team teamColor = TeamMember.Team.white;
+    public TeamMember.Team teamColor = TeamMember.Team.red;
 
     //
     public List<TeamMember> members = new List<TeamMember>();
@@ -39,10 +39,13 @@ public class TeamManager : MonoBehaviour
 	{
 		Stack<TeamMember> memberSet = new Stack<TeamMember>(initialMembers);
 
+		SortHelper.ListShuffle(initialPoints);
+		Stack<Transform> spawnPointSet = new Stack<Transform>(initialPoints);
+
 		while(memberSet.Count > 0)
 		{
 			TeamMember memberToSpawn = memberSet.Pop();
-			Transform spawnPoint = initialPoints[Random.Range(0, initialPoints.Count)];
+			Transform spawnPoint = spawnPointSet.Pop();
 			SpawnMember(memberToSpawn, spawnPoint);
 		}   
 	}

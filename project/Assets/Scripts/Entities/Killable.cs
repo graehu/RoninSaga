@@ -10,6 +10,7 @@ public class Killable : MonoBehaviour
     public AudioClip deathSound = null;
     public AudioClip damageSound = null;
 
+	public GameObject[] spawnOnSpawn = new GameObject[0];
     public GameObject[] spawnOnDeath = new GameObject[0];
 	public GameObject[] spawnOnHit = new GameObject[0];
 
@@ -73,8 +74,13 @@ public class Killable : MonoBehaviour
 	#region monobehaviuor methods
 
 	// Use this for initialization
-	void Start () {
-	
+	void Start () 
+	{
+		for (int i = 0; i < spawnOnSpawn.Length; i++)
+		{
+			GameObject gobj = Instantiate(spawnOnSpawn[i]) as GameObject;
+			gobj.transform.position = this.transform.position;
+		}
 	}
 	
 	// Update is called once per frame

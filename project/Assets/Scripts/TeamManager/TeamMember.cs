@@ -8,16 +8,19 @@ public class TeamMember : CombatEntity
 
     public enum Team
     {
-        white,
-        black,
+        red,
+        blue,
 		none
     }
 
     [HideInInspector]
     public TeamManager manager = null;
-    public Team teamColor = Team.white;
+    public Team teamColor = Team.red;
     public static List<TeamMember> AllTeamMembers = new List<TeamMember>();
     public float moral = 10.0f;
+
+	float actualMoralScale = 0;
+	float moralScaleVelocity = 0;
 	
 	public override bool GetClosestEnemy(out Killable _target, out float _distance)
 	{
@@ -58,6 +61,20 @@ public class TeamMember : CombatEntity
 	}
 	
     #endregion
+
+	void Update()
+	{
+		base.Update();
+
+		float moralScale = GameManager.Instance.GetTeamRelativeMoral(teamColor);
+		actualMoralScale = Mathf.SmoothDamp(actualMoralScale, moralScale, ref moralScaleVelocity, 0.5f);
+
+		float physicalScale = 1 + actualMoralScale;
+		physicalScale = Mathf.Min(1.6f, physicalScale * physicalScale);
+		transform.localScale = new Vector3(physicalScale,physicalScale,physicalScale);
+
+		damageScale = 1.1f + actualMoralScale * 3f;
+	}
 
     void OnEnable()
     {

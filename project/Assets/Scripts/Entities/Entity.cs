@@ -55,12 +55,6 @@ public class Entity : Killable {
 
     #region Monobehaviour methods
 
-	// Use this for initialization
-	protected virtual void Start () 
-	{
-
-	}
-
     protected virtual void Update()
 	{
         if (DialogueUI.isDialogueOpen)

@@ -91,13 +91,13 @@ public class PlayerController : MonoBehaviour
 		{
 			teamChangeCooldownRemaining += teamChangeCooldown;
 			//TODO: better support for multiple teams
-			if(activeEntity.teamColor == TeamMember.Team.white)
+			if(activeEntity.teamColor == TeamMember.Team.red)
 			{
-				OnTeamChange(TeamMember.Team.black);
+				OnTeamChange(TeamMember.Team.blue);
 			}
-			else if(activeEntity.teamColor == TeamMember.Team.black)
+			else if(activeEntity.teamColor == TeamMember.Team.blue)
 			{
-				OnTeamChange(TeamMember.Team.white);
+				OnTeamChange(TeamMember.Team.red);
 			}
 		}
     }
@@ -106,12 +106,12 @@ public class PlayerController : MonoBehaviour
 	{
 		TeamMember previousEntity = activeEntity;
 
-		if(_team == TeamMember.Team.white)
+		if(_team == TeamMember.Team.red)
 		{
 			blackEntity.gameObject.SetActive(false);
 			activeEntity = whiteEntity;
 		}
-		else if(_team == TeamMember.Team.black)
+		else if(_team == TeamMember.Team.blue)
 		{
 			whiteEntity.gameObject.SetActive(false);
 			activeEntity = blackEntity;
@@ -164,7 +164,8 @@ public class PlayerController : MonoBehaviour
 
     void OnDisable()
     {
-        activeEntity.TryMove(Vector2.zero);
+		if(activeEntity)
+        	activeEntity.TryMove(Vector2.zero);
     }
 
 	void OnDestroy()

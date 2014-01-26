@@ -19,11 +19,9 @@ public class MeleeAIController : MonoBehaviour {
 	public CombatEntity entity;
 
 	public State currentState = State.Idle;
-
-	public int damage = 1;
+	
 	public float attackRate = 0.5f;
 	public float attackDistance = 0.5f;
-	public float knockbackVelocity = 5;
 	public float agressiveness = 0.4f;
 
 	public float fleeHealth = 1;

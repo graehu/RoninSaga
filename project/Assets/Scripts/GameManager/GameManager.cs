@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -13,11 +13,20 @@ public class GameManager : MonoBehaviour
 
     #region public variables
 
+	public SpriteRenderer moralSlider = null;
+	public float moralSliderMaxOffset = 3;
+	public float startDelay = 1;
+	public float RelativeMoral { get { return relativeMoral; } }
+
     #endregion
 
 	#region private variables
 
-    float spawnTick = 0;
+	bool spawnedInitial = false;
+    float tick = 0;
+
+	float relativeMoral = 0;
+	Vector3 moralVelocity = Vector3.zero;
 
 	#endregion
 
@@ -39,10 +48,20 @@ public class GameManager : MonoBehaviour
         for(int i = 0; i < TeamMember.AllTeamMembers.Count; i++)
         {
 			if(TeamMember.AllTeamMembers[i].teamColor == _team)
-            	totalMoral = TeamMember.AllTeamMembers[i].moral;
+            	totalMoral += TeamMember.AllTeamMembers[i].moral;
         }
         return totalMoral;
     }
+
+	public float GetTeamRelativeMoral(TeamMember.Team _team)
+	{
+		if(_team == TeamMember.Team.red && relativeMoral > 0)
+			return relativeMoral;
+		else if(_team == TeamMember.Team.blue && relativeMoral < 0)
+			return -relativeMoral;
+		else
+			return 0;
+	}
 
 	#endregion
 
@@ -58,17 +77,42 @@ public class GameManager : MonoBehaviour
 
 	void Start()
 	{
-		//have all teams spawn a new unit
-		foreach (TeamManager teamManager in TeamManager.AllTeamManagers) 
-		{
-			teamManager.SpawnInitial();
-		}
+
 	}
 
 	// Update is called once per frame
 	void Update ()
     {
-        
+		tick += Time.deltaTime;
+		if(tick > startDelay)
+		{
+			if(!spawnedInitial)
+			{
+				spawnedInitial = true;
+				//have all teams spawn a new unit
+				foreach (TeamManager teamManager in TeamManager.AllTeamManagers) 
+				{
+					teamManager.SpawnInitial();
+				}
+			}
+	        if(Input.GetKeyDown(KeyCode.Escape))
+			{
+				Application.LoadLevel(Application.loadedLevel);
+			}
+
+			//calculate and update moral slider
+			float blueMoral = GetTeamMoral(TeamMember.Team.blue);
+			float redMoral = GetTeamMoral(TeamMember.Team.red);
+
+			float totalMoral = blueMoral + redMoral;
+			relativeMoral = (redMoral - blueMoral) / totalMoral;
+
+			Vector3 sliderPos = moralSlider.transform.position;
+			sliderPos.x = relativeMoral * moralSliderMaxOffset;
+			moralSlider.transform.position = Vector3.SmoothDamp(moralSlider.transform.position, sliderPos, ref moralVelocity, 0.5f);
+		}
+
+
 	}
 
 	#endregion

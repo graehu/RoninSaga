@@ -21,6 +21,8 @@ public class CombatEntity : Entity
 
 	#region protected variables
 
+	protected float damageScale = 1;
+
 	#endregion
 
 	#region private variables
@@ -35,7 +37,7 @@ public class CombatEntity : Entity
 	public void TryMeleeAttack()
 	{
 		meleeAreaDamage.owner = this; //TODO: change to team alignment
-		meleeAreaDamage.damageScale = 1;
+		meleeAreaDamage.damageScale = damageScale;
 		meleeAreaDamage.ApplyDamage();
 
 		animator.SetTrigger("melee");
@@ -56,7 +58,7 @@ public class CombatEntity : Entity
 
 		projectile.owner = this; //TODO: change to team alignment
 
-		projectile.damageScale = 1;
+		projectile.damageScale = damageScale;
 
 		projectile.transform.position = lookBody.position;
 		projectile.transform.rotation = lookBody.rotation;
